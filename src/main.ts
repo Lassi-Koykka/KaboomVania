@@ -16,6 +16,7 @@ gravity(1000);
 
 addLevel(
   [
+    "          o     ",
     "                ",
     "                ",
     "                ",
@@ -31,6 +32,7 @@ addLevel(
     width: 16,
     height: 14,
     x: () => [area(), solid(), rect(16, 14), color(100, 100, 100), outline(1)],
+    o: () => ["hook", area({width: 16, height: 14}), circle(8), color(25, 200, 25), outline(1)]
   }
 );
 
@@ -44,4 +46,4 @@ onKeyPress("2", () => {
   const {x, y} = toWorld(mousePos());
   enemy(x, y);
 });
-const e = enemy(100, 100);
+enemy(100, 100);

@@ -7,7 +7,7 @@ const WHIP_LENGTH = 60;
 const WHIP_SEGMENTS = 8;
 
 const getInputDir = () => {
-  const dir = vec2(0,0);
+  const dir = vec2(0, 0);
   up() && dir.y--;
   down() && dir.y++;
   left() && dir.x--;
@@ -31,7 +31,7 @@ export const player = (x: number = 190, y: number = 100) => {
       crouching: false,
       attacking: false,
       dirX: 0,
-      facing: 1
+      facing: 1,
     },
   ]);
 
@@ -43,7 +43,7 @@ export const player = (x: number = 190, y: number = 100) => {
     if (!p.attacking && p.isGrounded() && down()) {
       p.crouching = true;
       p.height = PLAYER_HEIGHT / 2;
-    } else if(!p.attacking) {
+    } else if (!p.attacking) {
       p.crouching = false;
       p.height = PLAYER_HEIGHT;
     }
@@ -52,73 +52,134 @@ export const player = (x: number = 190, y: number = 100) => {
     if (!p.crouching && (!p.attacking || !p.isGrounded()))
       p.move(SPEED * p.dirX, 0);
     if (!left() && !right()) p.dirX = 0;
-  }); 
+  });
 
-  const useWhip = async () => {
-    const inputDir = getInputDir();
-    if(inputDir.eq(vec2(0))) inputDir.x = p.facing;
-    const angle = inputDir.angle(vec2(0));
+  const whip = add([
+    "weapon",
+    z(1),
+    pos(vec2(0, -PLAYER_HEIGHT / 2)),
+    state("inactive", ["inactive", "attack", "hold"]),
+    { length: WHIP_LENGTH / 3, attackDir: vec2(0) },
+  ]);
 
-    if (p.attacking) return;
+  const whipSegs: GameObj[] = [];
+  let whipSticks: {
+    p1: GameObj;
+    p2: GameObj;
+    length: number;
+  }[] = [];
 
+  for (let i = 0; i < WHIP_SEGMENTS; i++) {
+    const last = i === WHIP_SEGMENTS - 1;
+    const segWidth = last ? 14 : 10;
+    const seg = add([
+      "weapon",
+      pos(),
+      z(5),
+      area({ width: segWidth, height: segWidth }),
+      circle(segWidth / 2),
+      outline(1),
+      rotate(0),
+      last ? color(250, 150, 0) : color(140, 140, 140),
+      //@ts-ignore
+      origin("center"),
+      { locked: i === 0 },
+    ]);
+    seg.onCollide("enemy", (enemy: GameObj) => {
+      if (whip.state !== "inactive") destroy(enemy);
+    });
+    whipSegs.push(seg);
+  }
+
+  whip.onUpdate(() => updateWhipPos());
+
+  whip.onStateEnter("inactive", () => {
+    p.attacking = false;
+    whip.hidden = true;
+    whipSegs.forEach((seg) => {
+      seg.hidden = true;
+    });
+  });
+
+  whip.onStateLeave("inactive", () => {
     p.attacking = true;
+    whip.hidden = false;
+    whipSegs.forEach((seg) => (seg.hidden = false));
+  });
 
-    // TODO MAKE CHILD OF PLAYER
-    const whip = add([pos(), { length: WHIP_LENGTH / 3 }, state("initial", ["initial", "holding"]), "weapon"]);
+  whip.onStateEnter("hold", () => {
+    whipSticks = [];
+    whipSegs.forEach((seg, i) => {
+      if (i !== whipSegs.length - 1) {
+        const next = whipSegs[i + 1];
+        whipSticks.push({
+          p1: seg,
+          p2: next,
+          length: seg.pos.dist(next.pos),
+        });
+      } else if (whip.attackDir.eq(UP) || whip.attackDir.eq(DOWN)) {
+        seg.pos.x += 0.1
+      }
+    });
+  });
 
-    const whipSegs: GameObj[] = [];
-    // const whipSticks: { p1: typeof Vec2, p2: typeof Vec2, length: number }[] = [];
-    for (let i = 0; i < WHIP_SEGMENTS; i++) {
-      const last = i === WHIP_SEGMENTS - 1;
-      const segWidth = last ? 14 : 10;
-      const seg = add([
-        "weapon",
-        pos(),
-        area({width: segWidth, height: segWidth}),
-        circle(segWidth / 2),
-        outline(1),
-        rotate(angle),
-        last ? color(250, 150, 0) : color(140, 140, 140),
-        //@ts-ignore
-        origin("center"),
-        {prevPos: vec2(0,0)},
-      ]);
-      whipSegs.push(seg);
-    }
+  whip.onStateUpdate("hold", () => {
+    if (!isKeyDown("j")) whip.enterState("inactive");
+  });
 
-    whipSegs.forEach((seg) =>
-      seg.onCollide("enemy", (enemy: GameObj) => {
-        destroy(enemy);
-      })
-    );
+  const updateWhipPos = () => {
+    const newPos = vec2(p.pos.x, p.pos.y - PLAYER_HEIGHT / 2);
 
-    const updateWhipPos = () => {
-      const newPos = vec2(p.pos.x, p.pos.y - PLAYER_HEIGHT / 2);
-      if (Math.abs(angle) < 90) newPos.x += 7;
-      else if (Math.abs(angle) > 90) newPos.x += -7;
-      else if (angle === 90) newPos.y += 7;
-      else if (angle === -90) newPos.y += -7;
-      whip.pos = newPos;
+    whip.pos = newPos;
+
+    if (whip.state !== "hold") {
       whipSegs.forEach((seg, i) => {
         const scl = ((i + 1) / whipSegs.length) * whip.length;
-        const partPos = Vec2.fromAngle(angle).scale(scl).add(newPos);
-        seg.prevPos = seg.pos
+        const partPos =
+          whip.state !== "inactive"
+            ? whip.attackDir.scale(scl).add(newPos)
+            : whip.pos;
+        seg.prevPos = seg.pos;
         seg.pos = partPos;
       });
+    } else {
+      const newDir = getInputDir()
+      whip.attackDir = !newDir.eq(vec2(0,0)) ? newDir.unit() : whip.attackDir
+      // Set locked
+      const scl = 1 / whipSegs.length * whip.length;
+      whipSegs[0].pos = whip.attackDir.scale(scl).add(newPos)
+
+      whipSegs.forEach(seg => {
+        if(!seg.locked) {
+          const posBeforeUpdate = seg.pos.clone()
+          seg.pos = seg.pos.add(seg.pos.sub(seg.prevPos))
+          //@ts-ignore
+          seg.pos = seg.pos.add(DOWN.scale(1000).scale(dt()**2))
+          seg.prevPos = posBeforeUpdate
+        }
+      })
+      for (let i = 0; i < 10; i++) {
+        whipSticks.forEach((stick) => {
+          const {p1, p2, length} = stick
+          const stickCenter = p1.pos.add(p2.pos).scale(0.5);
+          const stickDir = p1.pos.sub(p2.pos).unit();
+          if(!p1.locked)
+            p1.pos = stickCenter.add(stickDir.scale(length / 2))
+          if(!p2.locked)
+            p2.pos = stickCenter.sub(stickDir.scale(length / 2))
+        });
+      }
     }
+  };
 
-    whip.onStateUpdate("initial", () => {
-      updateWhipPos();
-    });
+  const useWhip = async () => {
+    whip.length = WHIP_LENGTH / 2;
 
-    whip.onStateUpdate("holding", () => {
-      updateWhipPos();
-      if(isKeyReleased("j")) destroyWhip();
-    })
+    const inputDir = getInputDir();
+    if (inputDir.eq(vec2(0))) inputDir.x = p.facing;
+    whip.attackDir = inputDir.unit();
 
-    p.onDestroy(() => {
-      destroyWhip();
-    })
+    whip.enterState("attack");
 
     wait(0.02, () => {
       whip.length += WHIP_LENGTH / 3;
@@ -127,19 +188,20 @@ export const player = (x: number = 190, y: number = 100) => {
       });
     });
 
-    const destroyWhip = () => {
-      p.attacking = false;
-      whipSegs.forEach((seg) => destroy(seg));
-      destroy(whip);
-    }
-
     wait(0.3, () => {
-      if(isKeyDown("j")) {
-        whip.enterState("holding");
-      } else destroyWhip();
+      if (isKeyDown("j")) {
+        whip.enterState("hold");
+      } else whip.enterState("inactive");
     });
   };
 
+  // Destroy all
+  p.onDestroy(() => {
+    whipSegs.forEach((seg) => destroy(seg));
+    destroy(whip);
+  });
+
+  // Controls
   onKeyDown("a", () => {
     if (!p.attacking && p.isGrounded()) {
       p.dirX = -1;
@@ -148,10 +210,10 @@ export const player = (x: number = 190, y: number = 100) => {
   });
 
   onKeyDown("d", () => {
-    if (!p.attacking && p.isGrounded()){
+    if (!p.attacking && p.isGrounded()) {
       p.dirX = 1;
       p.facing = 1;
-    } 
+    }
   });
 
   onKeyPress("space", () => {
@@ -161,7 +223,7 @@ export const player = (x: number = 190, y: number = 100) => {
   });
 
   onKeyPress("j", () => {
-    useWhip();
+    !p.attacking && useWhip();
   });
 
   return p;
