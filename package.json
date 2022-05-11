@@ -5,13 +5,15 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
     "typescript": "^4.5.4",
     "vite": "^2.9.7"
   },
   "dependencies": {
+    "gh-pages": "^4.0.0",
     "kaboom": "^2001.0.0-alpha.21"
   }
 }
