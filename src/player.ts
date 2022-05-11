@@ -63,6 +63,7 @@ export const player = (x: number = 190, y: number = 100) => {
 
     p.attacking = true;
 
+    // TODO MAKE CHILD OF PLAYER
     const whip = add([pos(), { length: WHIP_LENGTH / 3 }, state("initial", ["initial", "holding"]), "weapon"]);
 
     const whipSegs: GameObj[] = [];
