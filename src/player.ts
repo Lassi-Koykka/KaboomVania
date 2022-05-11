@@ -6,21 +6,19 @@ const PLAYER_HEIGHT = 28;
 const WHIP_LENGTH = 60;
 const WHIP_SEGMENTS = 8;
 
-const getAngle = () => {
-  if (up() && right()) return -45;
-  if (down() && right()) return 45;
-  if (down() && left()) return 135;
-  if (up() && left()) return -135;
-  else if (up()) return -90;
-  else if (down()) return 90;
-  else if (left()) return 180;
-  else if (right()) return 0;
-  else return null;
+const getInputDir = () => {
+  const dir = vec2(0,0);
+  up() && dir.y--;
+  down() && dir.y++;
+  left() && dir.x--;
+  right() && dir.x++;
+  return dir;
 };
 
 export const player = (x: number = 190, y: number = 100) => {
   // Create player
   const p = add([
+    "player",
     pos(x, y),
     rect(14, PLAYER_HEIGHT),
     outline(1),
@@ -29,11 +27,11 @@ export const player = (x: number = 190, y: number = 100) => {
     color(150, 100, 50),
     //@ts-ignore
     origin("bot"),
-    "player",
     {
       crouching: false,
       attacking: false,
       dirX: 0,
+      facing: 1
     },
   ]);
 
@@ -42,10 +40,10 @@ export const player = (x: number = 190, y: number = 100) => {
     camPos(vec2(p.pos.x, p.pos.y - PLAYER_HEIGHT / 2));
 
     //Crouch
-    if (p.isGrounded() && down()) {
+    if (!p.attacking && p.isGrounded() && down()) {
       p.crouching = true;
       p.height = PLAYER_HEIGHT / 2;
-    } else {
+    } else if(!p.attacking) {
       p.crouching = false;
       p.height = PLAYER_HEIGHT;
     }
@@ -54,30 +52,35 @@ export const player = (x: number = 190, y: number = 100) => {
     if (!p.crouching && (!p.attacking || !p.isGrounded()))
       p.move(SPEED * p.dirX, 0);
     if (!left() && !right()) p.dirX = 0;
-  });
+  }); 
 
   const useWhip = async () => {
-    const angle = getAngle();
+    const inputDir = getInputDir();
+    if(inputDir.eq(vec2(0))) inputDir.x = p.facing;
+    const angle = inputDir.angle(vec2(0));
 
-    if (p.attacking || angle === null) return;
+    if (p.attacking) return;
 
     p.attacking = true;
 
-    const whip = add([pos(), { length: WHIP_LENGTH / 3 }]);
+    const whip = add([pos(), { length: WHIP_LENGTH / 3 }, state("initial", ["initial", "holding"]), "weapon"]);
 
     const whipSegs: GameObj[] = [];
+    // const whipSticks: { p1: typeof Vec2, p2: typeof Vec2, length: number }[] = [];
     for (let i = 0; i < WHIP_SEGMENTS; i++) {
       const last = i === WHIP_SEGMENTS - 1;
+      const segWidth = last ? 14 : 10;
       const seg = add([
+        "weapon",
         pos(),
-        area(),
-        last ? rect(14, 14) : rect(10, 10),
+        area({width: segWidth, height: segWidth}),
+        circle(segWidth / 2),
         outline(1),
         rotate(angle),
         last ? color(250, 150, 0) : color(140, 140, 140),
         //@ts-ignore
         origin("center"),
-        "weapon",
+        {prevPos: vec2(0,0)},
       ]);
       whipSegs.push(seg);
     }
@@ -88,7 +91,7 @@ export const player = (x: number = 190, y: number = 100) => {
       })
     );
 
-    whip.onUpdate(() => {
+    const updateWhipPos = () => {
       const newPos = vec2(p.pos.x, p.pos.y - PLAYER_HEIGHT / 2);
       if (Math.abs(angle) < 90) newPos.x += 7;
       else if (Math.abs(angle) > 90) newPos.x += -7;
@@ -97,36 +100,61 @@ export const player = (x: number = 190, y: number = 100) => {
       whip.pos = newPos;
       whipSegs.forEach((seg, i) => {
         const scl = ((i + 1) / whipSegs.length) * whip.length;
-        console.log(scl);
         const partPos = Vec2.fromAngle(angle).scale(scl).add(newPos);
+        seg.prevPos = seg.pos
         seg.pos = partPos;
       });
+    }
+
+    whip.onStateUpdate("initial", () => {
+      updateWhipPos();
     });
 
-    wait(0.01, () => {
+    whip.onStateUpdate("holding", () => {
+      updateWhipPos();
+      if(isKeyReleased("j")) destroyWhip();
+    })
+
+    p.onDestroy(() => {
+      destroyWhip();
+    })
+
+    wait(0.02, () => {
       whip.length += WHIP_LENGTH / 3;
       wait(0.02, () => {
         whip.length += WHIP_LENGTH / 3;
       });
     });
 
-    wait(0.3, () => {
+    const destroyWhip = () => {
       p.attacking = false;
       whipSegs.forEach((seg) => destroy(seg));
       destroy(whip);
+    }
+
+    wait(0.3, () => {
+      if(isKeyDown("j")) {
+        whip.enterState("holding");
+      } else destroyWhip();
     });
   };
 
   onKeyDown("a", () => {
-    if (!p.attacking && p.isGrounded()) p.dirX = -1;
+    if (!p.attacking && p.isGrounded()) {
+      p.dirX = -1;
+      p.facing = -1;
+    }
   });
 
   onKeyDown("d", () => {
-    if (!p.attacking && p.isGrounded()) p.dirX = 1;
+    if (!p.attacking && p.isGrounded()){
+      p.dirX = 1;
+      p.facing = 1;
+    } 
   });
 
   onKeyPress("space", () => {
-    if (p.isGrounded()) {
+    if (!p.attacking && p.isGrounded()) {
       p.jump();
     }
   });

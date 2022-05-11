@@ -3,9 +3,6 @@ import kaboom from "kaboom";
 import { player } from "./player";
 import { enemy } from "./enemy";
 
-// const canvas = document.querySelector<HTMLCanvasElement>("#gamecanvas")!
-// canvas.tabIndex = 1;
-
 kaboom({
   width: 320,
   height: 200,
@@ -33,15 +30,18 @@ addLevel(
   {
     width: 16,
     height: 14,
-    x: () => [
-      area(),
-      solid(),
-      rect(16, 14),
-      color(100, 100, 100),
-      outline(1)
-    ],
+    x: () => [area(), solid(), rect(16, 14), color(100, 100, 100), outline(1)],
   }
 );
 
-const p = player();
+let p = player();
+onKeyPress("1", () => {
+  destroy(p);
+  const {x, y} = toWorld(mousePos());
+  p = player(x, y)
+});
+onKeyPress("2", () => {
+  const {x, y} = toWorld(mousePos());
+  enemy(x, y);
+});
 const e = enemy(100, 100);
