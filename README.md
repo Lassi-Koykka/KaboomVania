@@ -3,4 +3,7 @@
 
 ## TODO
 
-- [ ] todo-list
+- [ ] Finish swing mechanic
+- [ ] Add Sprites (Placeholder)
+- [ ] Add basic sounds
+- [ ] Add enemy movment
