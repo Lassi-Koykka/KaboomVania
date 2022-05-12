@@ -32,18 +32,26 @@ addLevel(
     width: 16,
     height: 14,
     x: () => [area(), solid(), rect(16, 14), color(100, 100, 100), outline(1)],
-    o: () => ["hook", area({width: 16, height: 14}), circle(8), color(25, 200, 25), outline(1)]
+    o: () => [
+      "hook",
+      area({ width: 16, height: 14 }),
+      circle(8),
+      color(25, 200, 25),
+      outline(1),
+      //@ts-ignore
+      origin("center")
+    ],
   }
 );
 
 let p = player();
 onKeyPress("1", () => {
   destroy(p);
-  const {x, y} = toWorld(mousePos());
-  p = player(x, y)
+  const { x, y } = toWorld(mousePos());
+  p = player(x, y);
 });
 onKeyPress("2", () => {
-  const {x, y} = toWorld(mousePos());
+  const { x, y } = toWorld(mousePos());
   enemy(x, y);
 });
 enemy(100, 100);
