@@ -3,7 +3,8 @@
 
 ## TODO
 
-- [ ] Finish swing mechanic
+- [x] Finish swing mechanic
+- [ ] More complex level
 - [ ] Add Sprites (Placeholder)
 - [ ] Add basic sounds
-- [ ] Add enemy movment
+- [ ] Add enemy movement

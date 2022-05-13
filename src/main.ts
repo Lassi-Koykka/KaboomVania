@@ -3,17 +3,21 @@ import kaboom from "kaboom";
 import { player } from "./player";
 import { enemy } from "./enemy";
 
+export const GRAVITY = 1200
+
 kaboom({
-  width: 320,
-  height: 200,
+  width: 640,
+  height: 400,
   stretch: true,
   letterbox: true,
   crisp: true,
   background: [25, 25, 25],
 });
 
-gravity(1000);
+gravity(GRAVITY);
 
+const MAP_CELL_WIDTH = 32;
+const MAP_CELL_HEIGHT = 30;
 addLevel(
   [
     "          o     ",
@@ -29,15 +33,15 @@ addLevel(
     "xsxxxxxxxxxxxxxx",
   ],
   {
-    width: 16,
-    height: 14,
-    x: () => [area(), solid(), rect(16, 14), color(100, 100, 100), outline(1)],
+    width: MAP_CELL_WIDTH,
+    height: MAP_CELL_HEIGHT,
+    x: () => [area(), solid(), rect(MAP_CELL_WIDTH, MAP_CELL_HEIGHT), color(100, 100, 100), outline(2)],
     o: () => [
       "hook",
-      area({ width: 16, height: 14 }),
-      circle(8),
+      area({ width: MAP_CELL_WIDTH, height: MAP_CELL_HEIGHT }),
+      circle(MAP_CELL_HEIGHT / 2),
       color(25, 200, 25),
-      outline(1),
+      outline(2),
       //@ts-ignore
       origin("center")
     ],
