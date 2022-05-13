@@ -1,4 +1,4 @@
-import { up, down, left, right } from "./input";
+import { down, left, right } from "./input";
 import { Whip } from "./whip"
 
 const SPEED = 80;
