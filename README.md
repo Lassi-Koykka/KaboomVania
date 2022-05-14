@@ -4,7 +4,7 @@
 ## TODO
 
 - [x] Finish swing mechanic
+- [x] Add basic placeholder sprite for player
 - [ ] More complex level
-- [ ] Add Sprites (Placeholder)
 - [ ] Add basic sounds
 - [ ] Add enemy movement

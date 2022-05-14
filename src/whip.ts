@@ -1,13 +1,23 @@
-import {GameObj} from "kaboom";
+import {GameObj, Vec2} from "kaboom";
 import {getInputDir} from "./input";
 import {GRAVITY} from "./main";
 
-const DEFAULT_WHIP_LENGTH = 120;
-const WHIP_SEGMENTS = 14;
+const DEFAULT_WHIP_LENGTH = 80;
+const WHIP_SEGMENTS = 16;
 
+const getAnimByDirection = (dir: Vec2) => {
+  if(dir.x !== 0) {
+    if(dir.y > 0) return "whip_down_forward"
+    else if(dir.y < 0) return "whip_up_forward"
+    else return "whip_forward"
+  } else {
+    if(dir.y > 0) return "whip_down"
+    else return "whip_up"
+  }
+}
 
 export const Whip = (p: GameObj) => {
-  const WHIP_OFFSET = vec2(0, p.defaultHeight / 2)
+  const WHIP_OFFSET = vec2(0, p.defaultHeight / 2 + 3)
 
   const segs: GameObj[] = [];
   let sticks: {
@@ -33,14 +43,13 @@ export const Whip = (p: GameObj) => {
 
   for (let i = 0; i < WHIP_SEGMENTS; i++) {
     const last = i === WHIP_SEGMENTS - 1;
-    const segWidth = last ? 24 : 16;
+    const segWidth = last ? 16 : 10;
     const seg = add([
       "weapon",
       pos(),
-      z(5),
       area({ width: segWidth, height: segWidth }),
-      circle(segWidth / 2),
-      outline(1),
+      last ? rect(segWidth, segWidth) : circle(segWidth / 2),
+      outline(2),
       rotate(0),
       last ? color(250, 150, 0) : color(140, 140, 140),
       //@ts-ignore
@@ -73,19 +82,30 @@ export const Whip = (p: GameObj) => {
   };
 
   w.onUpdate(() => {
+    //Update segment angles
+    w.segs.forEach((seg, i) => {
+      if(i === 0) seg.angle = seg.pos.angle(w.pos)
+      else seg.angle = seg.pos.angle(w.segs[i  - 1].pos)
+
+      if(i === w.segs.length - 1) seg.angle += 45
+    })
+
     if (w.state === "hold" || w.state === "swing") {
       if (!isKeyDown("j")) w.enterState("inactive");
       return;
     }
 
+    // Update Whip pos
     w.pos = p.pos.sub(WHIP_OFFSET);
     // Interpolate whip segments to their correct places
     w.segs.forEach((seg, i) => {
-      const scl = ((i + 1) / w.segs.length) * w.length;
+      const scl = ((i + 1) / w.segs.length) * w.length + 10;
       const partPos =
         w.state !== "inactive" ? w.attackDir.scale(scl).add(w.pos) : w.pos;
       seg.prevPos = seg.pos;
       seg.pos = partPos;
+      if(w.attackDir.y > 0) seg.pos.y += + 5
+      else if(w.attackDir.y < 0) seg.pos.y += - 5
     });
     // Update prevPos
     w.prevPos = w.pos;
@@ -93,6 +113,7 @@ export const Whip = (p: GameObj) => {
 
   w.onStateEnter("inactive", () => {
     p.attacking = false;
+    p.play("idle")
     w.hidden = true;
     w.segs.forEach((seg) => {
       seg.hidden = true;
@@ -125,9 +146,18 @@ export const Whip = (p: GameObj) => {
     w.pos =  p.pos.sub(WHIP_OFFSET);
     const newDir = getInputDir();
     w.attackDir = !newDir.eq(vec2(0, 0)) ? newDir.unit() : w.attackDir;
-    // Set locked
-    const scl = (1 / w.segs.length) * w.length;
-    w.segs[0].pos = w.attackDir.scale(scl).add(w.pos);
+    // Play appropriate animation
+    p.facing = w.attackDir.x > 0 ? 1 : - 1
+    const anim = getAnimByDirection(w.attackDir)
+    p.play(anim)
+    p.frame += 1
+    // Update whipSegments
+    const scl = (1 / w.segs.length) * w.length + 10;
+    const firstSeg = w.segs[0]
+    firstSeg.pos = w.attackDir.scale(scl).add(w.pos);
+    if(w.attackDir.y > 0) firstSeg.pos.y += + 5
+    else if(w.attackDir.y < 0) firstSeg.pos.y += - 5
+
 
     w.segs.forEach((seg) => {
       if (!seg.locked) {
@@ -142,6 +172,8 @@ export const Whip = (p: GameObj) => {
   }); 
 
   w.onStateEnter("swing", () => {
+    p.play("idle")
+    p.frame = 3
     p.crouching = false;
     const lastSeg = w.segs[w.segs.length - 1];
     lastSeg.locked = true;
@@ -166,7 +198,7 @@ export const Whip = (p: GameObj) => {
   w.onStateUpdate("swing", () => {
     const moveDir = getInputDir()
     w.move(moveDir)
-    p.pos = w.pos.add(WHIP_OFFSET);
+    p.pos = w.pos.add(WHIP_OFFSET).add(vec2(2, 14));
 
     const pts = [w, w.segs[w.segs.length - 1]];
     pts.forEach((pt) => {
@@ -199,7 +231,9 @@ export const Whip = (p: GameObj) => {
 
     const inputDir = getInputDir();
     if (inputDir.eq(vec2(0))) inputDir.x = p.facing;
+    inputDir.x < 0 ? p.facing = -1 : p.facing = 1
     w.attackDir = inputDir.unit();
+    p.play(getAnimByDirection(w.attackDir))
 
     w.enterState("attack");
 

@@ -14,6 +14,37 @@ kaboom({
   background: [25, 25, 25],
 });
 
+loadSprite("player", "whip_man_v0.png", {
+  sliceX: 11,
+  sliceY: 1,
+  anims: {
+    idle: {
+      from: 0,
+      to: 0,
+    },
+    whip_up: {
+      from: 1,
+      to: 2
+    },
+    whip_up_forward: {
+      from: 3,
+      to: 4
+    },
+    whip_forward: {
+      from: 5,
+      to: 6
+    },
+    whip_down_forward: {
+      from: 7,
+      to: 8
+    },
+    whip_down: {
+      from: 9,
+      to: 10
+    },
+  }
+})
+
 gravity(GRAVITY);
 
 const MAP_CELL_WIDTH = 32;

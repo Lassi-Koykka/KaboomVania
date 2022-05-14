@@ -10,9 +10,10 @@ export const player = (x: number = 190, y: number = 100) => {
   const p = add([
     "player",
     pos(x, y),
-    rect(PLAYER_HEIGHT / 2, PLAYER_HEIGHT),
-    outline(2),
-    area(),
+    sprite("player"),
+    // rect(PLAYER_HEIGHT / 2, PLAYER_HEIGHT),
+    // outline(2),
+    area({width: 28, height: PLAYER_HEIGHT - 10}),
     body({ jumpForce: PLAYER_JUMP_FORCE }),
     color(150, 100, 50),
     //@ts-ignore
@@ -28,6 +29,8 @@ export const player = (x: number = 190, y: number = 100) => {
   ]);
 
   const playerIsGrounded = () => p.isGrounded && p.isGrounded();
+
+  const whip = Whip(p)
 
   p.onUpdate(() => {
     // Update camera
@@ -46,10 +49,10 @@ export const player = (x: number = 190, y: number = 100) => {
     if (!p.crouching && (!p.attacking || !playerIsGrounded()))
       p.move(SPEED * p.dirX, 0);
     if (!left() && !right()) p.dirX = 0;
+    p.flipX(p.facing === -1)
   });
 
   // --- WHIP ---
-  const whip = Whip(p)
 
 
   // Destroy all
