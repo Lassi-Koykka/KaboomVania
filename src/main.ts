@@ -15,32 +15,38 @@ kaboom({
 });
 
 loadSprite("player", "whip_man_v0.png", {
-  sliceX: 11,
+  sliceX: 15,
   sliceY: 1,
   anims: {
     idle: {
       from: 0,
       to: 0,
     },
-    whip_up: {
+    walk: {
       from: 1,
-      to: 2
+      to: 4,
+      loop: true,
+      speed: 6
+    },
+    whip_up: {
+      from: 6,
+      to: 6,
     },
     whip_up_forward: {
-      from: 3,
-      to: 4
+      from: 8,
+      to: 8,
     },
     whip_forward: {
-      from: 5,
-      to: 6
+      from: 10,
+      to: 10,
     },
     whip_down_forward: {
-      from: 7,
-      to: 8
+      from: 12,
+      to: 12,
     },
     whip_down: {
-      from: 9,
-      to: 10
+      from: 14,
+      to: 14,
     },
   }
 })

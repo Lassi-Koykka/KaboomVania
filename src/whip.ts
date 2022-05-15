@@ -1,23 +1,14 @@
-import {GameObj, Vec2} from "kaboom";
+import {GameObj} from "kaboom";
 import {getInputDir} from "./input";
 import {GRAVITY} from "./main";
 
 const DEFAULT_WHIP_LENGTH = 80;
-const WHIP_SEGMENTS = 16;
+const WHIP_SEGMENTS = 18;
+const HAND_OFFSET_SCALE = 20;
 
-const getAnimByDirection = (dir: Vec2) => {
-  if(dir.x !== 0) {
-    if(dir.y > 0) return "whip_down_forward"
-    else if(dir.y < 0) return "whip_up_forward"
-    else return "whip_forward"
-  } else {
-    if(dir.y > 0) return "whip_down"
-    else return "whip_up"
-  }
-}
 
 export const Whip = (p: GameObj) => {
-  const WHIP_OFFSET = vec2(0, p.defaultHeight / 2 + 3)
+  const WHIP_OFFSET = vec2(0, p.defaultHeight * 0.7)
 
   const segs: GameObj[] = [];
   let sticks: {
@@ -30,32 +21,45 @@ export const Whip = (p: GameObj) => {
     "weapon",
     z(1),
     pos(),
+    rect(14, 4),
+    color(75, 40, 0),
+    outline(2),
+    area({width: 1, height: 1}),
     state("inactive", ["inactive", "attack", "hold", "swing"]),
     { 
       attack: () => {}, 
       prevPos: vec2(0), 
-      length: DEFAULT_WHIP_LENGTH / 3, 
+      length: DEFAULT_WHIP_LENGTH / 4, 
       attackDir: vec2(0),
       segs,
       sticks
     },
   ]);
+  //@ts-ignore
+  w.origin = "right"
 
   for (let i = 0; i < WHIP_SEGMENTS; i++) {
     const last = i === WHIP_SEGMENTS - 1;
-    const segWidth = last ? 16 : 10;
+      const segWidth = 
+        !last 
+        ? DEFAULT_WHIP_LENGTH / WHIP_SEGMENTS
+        : 14;
     const seg = add([
       "weapon",
       pos(),
       area({ width: segWidth, height: segWidth }),
-      last ? rect(segWidth, segWidth) : circle(segWidth / 2),
+      last 
+        ? rect(segWidth, segWidth) 
+        : rect(segWidth, 4),
       outline(2),
       rotate(0),
-      last ? color(250, 150, 0) : color(140, 140, 140),
-      //@ts-ignore
-      origin("center"),
+      last 
+          ? color(250, 150, 0) 
+          : opacity(0),
       { locked: i === 0 },
     ]);
+    //@ts-ignore
+    seg.origin = "center"
     seg.onCollide("enemy", (enemy: GameObj) => {
       if (w.state !== "inactive") destroy(enemy);
     });
@@ -83,10 +87,13 @@ export const Whip = (p: GameObj) => {
 
   w.onUpdate(() => {
     //Update segment angles
-    w.segs.forEach((seg, i) => {
-      if(i === 0) seg.angle = seg.pos.angle(w.pos)
-      else seg.angle = seg.pos.angle(w.segs[i  - 1].pos)
+    const mod = w.attackDir.y < 0 ? -1 : 1
+    //@ts-ignore
+    w.angle = w.state !== "swing" ? w.attackDir.angle(vec2(0)) + mod * (p.facing * -45) : 270
 
+    w.segs.forEach((seg, i) => {
+      if(i !== 0) seg.angle = seg.pos.angle(w.segs[i  - 1].pos)
+      else seg.angle = w.pos.angle(seg.pos)
       if(i === w.segs.length - 1) seg.angle += 45
     })
 
@@ -96,16 +103,14 @@ export const Whip = (p: GameObj) => {
     }
 
     // Update Whip pos
-    w.pos = p.pos.sub(WHIP_OFFSET);
+    w.pos = p.pos.sub(WHIP_OFFSET).add(w.attackDir.scale(HAND_OFFSET_SCALE));
     // Interpolate whip segments to their correct places
     w.segs.forEach((seg, i) => {
-      const scl = ((i + 1) / w.segs.length) * w.length + 10;
+      const scl = ((i) / w.segs.length) * w.length;
       const partPos =
         w.state !== "inactive" ? w.attackDir.scale(scl).add(w.pos) : w.pos;
       seg.prevPos = seg.pos;
       seg.pos = partPos;
-      if(w.attackDir.y > 0) seg.pos.y += + 5
-      else if(w.attackDir.y < 0) seg.pos.y += - 5
     });
     // Update prevPos
     w.prevPos = w.pos;
@@ -113,7 +118,7 @@ export const Whip = (p: GameObj) => {
 
   w.onStateEnter("inactive", () => {
     p.attacking = false;
-    p.play("idle")
+    p.enterState("idle")
     w.hidden = true;
     w.segs.forEach((seg) => {
       seg.hidden = true;
@@ -143,20 +148,18 @@ export const Whip = (p: GameObj) => {
   });
 
   w.onStateUpdate("hold", () => {
-    w.pos =  p.pos.sub(WHIP_OFFSET);
     const newDir = getInputDir();
     w.attackDir = !newDir.eq(vec2(0, 0)) ? newDir.unit() : w.attackDir;
+    w.pos =  p.pos.sub(WHIP_OFFSET).add(w.attackDir.scale(HAND_OFFSET_SCALE));
+
     // Play appropriate animation
-    p.facing = w.attackDir.x > 0 ? 1 : - 1
-    const anim = getAnimByDirection(w.attackDir)
-    p.play(anim)
-    p.frame += 1
+    if(w.attackDir.x !== 0) 
+      p.facing = w.attackDir.x > 0 ? 1 : - 1
+
     // Update whipSegments
-    const scl = (1 / w.segs.length) * w.length + 10;
+    const scl = (0 / w.segs.length) * w.length;
     const firstSeg = w.segs[0]
     firstSeg.pos = w.attackDir.scale(scl).add(w.pos);
-    if(w.attackDir.y > 0) firstSeg.pos.y += + 5
-    else if(w.attackDir.y < 0) firstSeg.pos.y += - 5
 
 
     w.segs.forEach((seg) => {
@@ -172,9 +175,7 @@ export const Whip = (p: GameObj) => {
   }); 
 
   w.onStateEnter("swing", () => {
-    p.play("idle")
-    p.frame = 3
-    p.crouching = false;
+    p.enterState("swing")
     const lastSeg = w.segs[w.segs.length - 1];
     lastSeg.locked = true;
     p.unuse("body");
@@ -197,8 +198,8 @@ export const Whip = (p: GameObj) => {
 
   w.onStateUpdate("swing", () => {
     const moveDir = getInputDir()
+    p.pos = w.pos.add(WHIP_OFFSET).add(vec2(0, 20));
     w.move(moveDir)
-    p.pos = w.pos.add(WHIP_OFFSET).add(vec2(2, 14));
 
     const pts = [w, w.segs[w.segs.length - 1]];
     pts.forEach((pt) => {
@@ -233,14 +234,17 @@ export const Whip = (p: GameObj) => {
     if (inputDir.eq(vec2(0))) inputDir.x = p.facing;
     inputDir.x < 0 ? p.facing = -1 : p.facing = 1
     w.attackDir = inputDir.unit();
-    p.play(getAnimByDirection(w.attackDir))
+    p.enterState("attack")
 
     w.enterState("attack");
 
     wait(0.02, () => {
-      w.length += DEFAULT_WHIP_LENGTH / 3;
+      w.length += DEFAULT_WHIP_LENGTH / 4;
       wait(0.02, () => {
-        w.length += DEFAULT_WHIP_LENGTH / 3;
+        w.length += DEFAULT_WHIP_LENGTH / 4;
+        wait(0.02, () => {
+          w.length += DEFAULT_WHIP_LENGTH / 4;
+        });
       });
     });
 

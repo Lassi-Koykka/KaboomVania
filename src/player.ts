@@ -1,9 +1,21 @@
-import { down, left, right } from "./input";
+import { Vec2 } from "kaboom";
+import {  leftOrRight } from "./input";
 import { Whip } from "./whip"
 
 const SPEED = 80;
-const PLAYER_HEIGHT = 56;
+const PLAYER_HEIGHT = 46;
 const PLAYER_JUMP_FORCE = 390
+
+const getAnimByDirection = (dir: Vec2) => {
+  if(dir.x !== 0) {
+    if(dir.y > 0) return "whip_down_forward"
+    else if(dir.y < 0) return "whip_up_forward"
+    else return "whip_forward"
+  } else {
+    if(dir.y > 0) return "whip_down"
+    else return "whip_up"
+  }
+}
 
 export const player = (x: number = 190, y: number = 100) => {
   // Create player
@@ -11,9 +23,8 @@ export const player = (x: number = 190, y: number = 100) => {
     "player",
     pos(x, y),
     sprite("player"),
-    // rect(PLAYER_HEIGHT / 2, PLAYER_HEIGHT),
-    // outline(2),
-    area({width: 28, height: PLAYER_HEIGHT - 10}),
+    state("idle", ["idle", "walk", "attack", "swing"]),
+    area({width: 28, height: PLAYER_HEIGHT}),
     body({ jumpForce: PLAYER_JUMP_FORCE }),
     color(150, 100, 50),
     //@ts-ignore
@@ -21,39 +32,61 @@ export const player = (x: number = 190, y: number = 100) => {
     {
       defaultJumpForce: PLAYER_JUMP_FORCE,
       defaultHeight: PLAYER_HEIGHT,
-      crouching: false,
       attacking: false,
       dirX: 0,
       facing: 1,
+      grounded: () => {}
     },
   ]);
 
-  const playerIsGrounded = () => p.isGrounded && p.isGrounded();
+  p.grounded = () => p.isGrounded && p.isGrounded();
 
   const whip = Whip(p)
 
   p.onUpdate(() => {
-    // Update camera
+    // Update camera and sprite
     camPos(vec2(p.pos.x, p.pos.y - PLAYER_HEIGHT / 2));
-
-    //Crouch
-    if (!p.attacking && playerIsGrounded() && down()) {
-      p.crouching = true;
-      p.height = p.defaultHeight / 2;
-    } else if (!p.attacking) {
-      p.crouching = false;
-      p.height = p.defaultHeight;
-    }
-
-    // Move
-    if (!p.crouching && (!p.attacking || !playerIsGrounded()))
-      p.move(SPEED * p.dirX, 0);
-    if (!left() && !right()) p.dirX = 0;
     p.flipX(p.facing === -1)
+
+    // Move if walking or in air
+    if ((p.dirX && !p.attacking) || !p.grounded()) {
+      p.move(SPEED * p.dirX, 0);
+    }
+    if(!p.grounded()) {
+      !p.attacking && p.enterState("idle")
+      return;
+    } 
+
+    // Stop if on ground and no inputdir
+    if (!leftOrRight()) {
+      p.dirX = 0;
+      !p.attacking && p.enterState("idle")
+    } else if(leftOrRight() && !p.attacking) {
+      p.state !== "walk" && p.enterState("walk")
+    }
   });
 
-  // --- WHIP ---
+  p.onStateEnter("walk", () => {
+    p.play("walk")
+  })
+  
+  p.onStateEnter("idle", () => {
+    p.play("idle")
+  })
 
+  p.onStateUpdate("attack", () => {
+    const anim = getAnimByDirection(whip.attackDir)
+    p.play(anim)
+    // if(whip.state === "hold")
+    //   p.frame += 1
+  })
+
+  p.onStateEnter("swing", () => {
+    p.play("idle")
+    p.frame =  7
+  })
+
+  // --- WHIP ---
 
   // Destroy all
   p.onDestroy(() => {
@@ -63,21 +96,21 @@ export const player = (x: number = 190, y: number = 100) => {
 
   // Controls
   onKeyDown("a", () => {
-    if (!p.attacking && playerIsGrounded()) {
+    if (!p.attacking && p.grounded()) {
       p.dirX = -1;
       p.facing = -1;
     }
   });
 
   onKeyDown("d", () => {
-    if (!p.attacking && playerIsGrounded()) {
+    if (!p.attacking && p.grounded()) {
       p.dirX = 1;
       p.facing = 1;
     }
   });
 
   onKeyPress("space", () => {
-    if (!p.attacking && playerIsGrounded()) {
+    if (!p.attacking && p.grounded()) {
       p.jump();
     }
   });
