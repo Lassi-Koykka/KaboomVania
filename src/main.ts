@@ -14,6 +14,7 @@ kaboom({
   background: [25, 25, 25],
 });
 
+loadSprite("whip_tail", "whip_tail.png");
 loadSprite("player", "whip_man_v0.png", {
   sliceX: 15,
   sliceY: 1,

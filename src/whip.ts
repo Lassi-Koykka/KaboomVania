@@ -47,15 +47,9 @@ export const Whip = (p: GameObj) => {
     const seg = add([
       "weapon",
       pos(),
-      area({ width: segWidth, height: segWidth }),
-      last 
-        ? rect(segWidth, segWidth) 
-        : rect(segWidth, 4),
-      outline(2),
+      area({ width: segWidth, height: segWidth }), 
       rotate(0),
-      last 
-          ? color(250, 150, 0) 
-          : opacity(0),
+      ...(!last ? [opacity(0), rect(segWidth, 3), outline(2, new Color(125, 125, 125))] : [sprite("whip_tail")]),
       { locked: i === 0 },
     ]);
     //@ts-ignore
@@ -94,7 +88,7 @@ export const Whip = (p: GameObj) => {
     w.segs.forEach((seg, i) => {
       if(i !== 0) seg.angle = seg.pos.angle(w.segs[i  - 1].pos)
       else seg.angle = w.pos.angle(seg.pos)
-      if(i === w.segs.length - 1) seg.angle += 45
+      if(i === w.segs.length - 1) seg.angle += 90
     })
 
     if (w.state === "hold" || w.state === "swing") {

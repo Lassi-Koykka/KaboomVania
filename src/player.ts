@@ -1,5 +1,5 @@
 import { Vec2 } from "kaboom";
-import {  leftOrRight } from "./input";
+import { leftOrRight } from "./input";
 import { Whip } from "./whip"
 
 const SPEED = 80;
