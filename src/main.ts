@@ -57,23 +57,38 @@ gravity(GRAVITY);
 const MAP_CELL_WIDTH = 32;
 const MAP_CELL_HEIGHT = 30;
 addLevel(
+  // [
+  //   "          o     ",
+  //   "                ",
+  //   "                ",
+  //   "                ",
+  //   "xxxxxx          ",
+  //   "             xxx",
+  //   "      xxx    xxx",
+  //   "             xxx",
+  //   "          x  xxx",
+  //   "   s         xxx",
+  //   "xxxxxxxxxxxxxxxx",
+  // ],
   [
-    "          o     ",
-    "                ",
-    "                ",
-    "                ",
-    "xxxxxx          ",
-    "             xxx",
-    "      xxx    xxx",
-    "         s   xxx",
-    "          x  xxx",
-    "           s xxx",
-    "xsxxxxxxxxxxxxxx",
-  ],
+  "                                                   o    o       ",
+  "          o        o                                        e   ",
+  "  e                                 o                       xxx ",
+  "xxxxxx                                      xxx             xxx ",
+  "             xxx       e                                      x ",
+  "      xxx    xxx     xxxx    xxx         xx    xx             x ",
+  "             xxx                                              x ",
+  "          x  xxx          xx           xx          xx         x ",
+  "  s          xxx     e             e   xx                     x ",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+],
   {
     width: MAP_CELL_WIDTH,
     height: MAP_CELL_HEIGHT,
-    x: () => [area(), solid(), rect(MAP_CELL_WIDTH, MAP_CELL_HEIGHT), color(100, 100, 100), outline(2)],
+    s: () => ["spawnpoint"],
+    e: () => ["enemySpawn", { enemyType: "default" }],
+    //@ts-ignore
+    x: () => [area(), solid(), rect(MAP_CELL_WIDTH, MAP_CELL_HEIGHT), origin("bot"), color(100, 100, 100), outline(2)],
     o: () => [
       "hook",
       area({ width: MAP_CELL_WIDTH, height: MAP_CELL_HEIGHT }),
@@ -81,12 +96,19 @@ addLevel(
       color(25, 200, 25),
       outline(2),
       //@ts-ignore
-      origin("center")
+      origin("bot")
     ],
   }
 );
 
-let p = player();
+// Player spawnpoint
+let spawnpoint = get("spawnpoint")[0]
+let p = player(spawnpoint.pos.x, spawnpoint.pos.y);
+
+// Enemy Spawns
+let enemySpawnpoints = get("enemySpawn")
+enemySpawnpoints.forEach((sp) => enemy(sp.pos.x, sp.pos.y))
+
 onKeyPress("1", () => {
   destroy(p);
   const { x, y } = toWorld(mousePos());
@@ -96,4 +118,3 @@ onKeyPress("2", () => {
   const { x, y } = toWorld(mousePos());
   enemy(x, y);
 });
-enemy(100, 100);

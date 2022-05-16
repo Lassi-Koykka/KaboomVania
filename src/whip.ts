@@ -40,12 +40,14 @@ export const Whip = (p: GameObj) => {
 
   for (let i = 0; i < WHIP_SEGMENTS; i++) {
     const last = i === WHIP_SEGMENTS - 1;
+
       const segWidth = 
         !last 
         ? DEFAULT_WHIP_LENGTH / WHIP_SEGMENTS
         : 14;
+
     const seg = add([
-      "weapon",
+      "whip",
       pos(),
       area({ width: segWidth, height: segWidth }), 
       rotate(0),
@@ -55,9 +57,10 @@ export const Whip = (p: GameObj) => {
     //@ts-ignore
     seg.origin = "center"
     seg.onCollide("enemy", (enemy: GameObj) => {
-      if (w.state !== "inactive") destroy(enemy);
+      if (w.state === "attack" || (last && w.state === "hold")) destroy(enemy);
     });
 
+    // Start swing
     seg.onCollide("hook", (hook: GameObj) => {
       if (w.state === "swing" || w.state === "inactive") return;
       const lastSeg = segs[segs.length - 1];

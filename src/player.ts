@@ -3,7 +3,7 @@ import { leftOrRight } from "./input";
 import { Whip } from "./whip"
 
 const SPEED = 80;
-const PLAYER_HEIGHT = 46;
+const PLAYER_HEIGHT = 48;
 const PLAYER_JUMP_FORCE = 390
 
 const getAnimByDirection = (dir: Vec2) => {
@@ -22,6 +22,7 @@ export const player = (x: number = 190, y: number = 100) => {
   const p = add([
     "player",
     pos(x, y),
+    health(14),
     sprite("player"),
     state("idle", ["idle", "walk", "attack", "swing"]),
     area({width: 28, height: PLAYER_HEIGHT}),
@@ -30,6 +31,7 @@ export const player = (x: number = 190, y: number = 100) => {
     //@ts-ignore
     origin("bot"),
     {
+      invulnerable: false,
       defaultJumpForce: PLAYER_JUMP_FORCE,
       defaultHeight: PLAYER_HEIGHT,
       attacking: false,
@@ -117,6 +119,10 @@ export const player = (x: number = 190, y: number = 100) => {
 
   onKeyPress("j", () => {
     !p.attacking && whip.attack();
+  });
+
+  onKeyPress("k", () => {
+    !p.attacking && debug.log("ADD SWORD SWING HERE");
   });
 
   return p;
