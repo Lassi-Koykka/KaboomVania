@@ -20,7 +20,7 @@ const getEnemyPropreties = (type: enemyType): IEnemyProperties => {
       width: 28,
       height: 28,
       aggroDistance: 500,
-      components: [{ dirX: -1, activated: false, freqMultiplier: 3, ampMultiplier: 2 }],
+      components: [{ dirX: -1, activated: false, ampMultiplier: 2 }],
       handleUpdate: (e) => {
         if (!e.activated) {
           const p = get("player")[0];
@@ -31,7 +31,7 @@ const getEnemyPropreties = (type: enemyType): IEnemyProperties => {
           e.activated = true;
         }
 
-        const newY = e.pos.y * Math.sin(time() * e.freqMultiplier) * e.ampMultiplier;
+        const newY = e.pos.y * Math.sin(time()) * e.ampMultiplier;
         // Move
         e.move(vec2(e.dirX * e.speed, newY));
       },
