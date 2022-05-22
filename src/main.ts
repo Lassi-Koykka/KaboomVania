@@ -4,7 +4,7 @@ import { player } from "./player";
 import { enemy } from "./enemy";
 
 export const GRAVITY = 1200;
-export const SOLID_RADIUS = 640;
+export const SOLID_RADIUS = 330;
 
 kaboom({
   width: 640,
@@ -73,14 +73,14 @@ addLevel(
   // ],
   [
   "                                                   o    o       ",
-  "          o        o                                        e   ",
-  "  e                                 o                       xxx ",
+  "          o        o                             f          e   ",
+  "  e              f                  o                       xxx ",
   "xxxxxx                                      xxx             xxx ",
   "             xxx       e                                      x ",
   "      xxx    xxx     xxxx    xxx         xx    xx             x ",
-  "             xxx                                              x ",
+  "             xxx                                        f     x ",
   "          x  xxx          xx           xx          xx         x ",
-  "  s          xxx     e             e   xx                     x ",
+  "  s          xxx                   e   xx                     x ",
   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ],
   {
@@ -88,6 +88,7 @@ addLevel(
     height: MAP_CELL_HEIGHT,
     s: () => ["spawnpoint"],
     e: () => ["enemySpawn", { enemyType: "default" }],
+    f: () => ["enemySpawn", { enemyType: "flying" }],
     //@ts-ignore
     x: () => [
       "levelblock",
@@ -121,16 +122,18 @@ const levelBlocks = get("levelblock");
 levelBlocks.forEach(block => {
   block.onUpdate(() => {
     if(block.pos.dist(p.pos) > SOLID_RADIUS && block.solid) {
-      block.solid = false; 
+      block.unuse("solid");
+      // block.solid = false; 
     } else if (!block.solid)  {
-      block.solid = true; 
+      block.use(solid());
+      // block.solid = true; 
     }
   });
 })
 
 // Enemy Spawns
 let enemySpawnpoints = get("enemySpawn")
-enemySpawnpoints.forEach((sp) => enemy(sp.pos.x, sp.pos.y))
+enemySpawnpoints.forEach((sp) => enemy(sp.pos.x, sp.pos.y, sp.enemyType))
 
 onKeyPress("1", () => {
   destroy(p);

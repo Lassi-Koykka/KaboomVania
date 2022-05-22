@@ -36,7 +36,7 @@ const Sword = (p: GameObj, whip: GameObj, PLAYER_HEIGHT: number) => {
   });
 
   s.onCollide("enemy", (enemy) => {
-    debug.log(s.attacking);
+    // debug.log(s.attacking);
     if (s.attacking) destroy(enemy);
   });
   return s;
