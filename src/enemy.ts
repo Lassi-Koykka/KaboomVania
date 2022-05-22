@@ -34,7 +34,7 @@ export const enemy = (x: number, y: number) => {
       player.jump()
     }
 
-    debug.log(player.hp())
+    debug.log("HP: " + player.hp())
     wait(0.3, () => player.invulnerable = false);
   })
 

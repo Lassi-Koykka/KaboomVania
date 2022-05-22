@@ -3,7 +3,8 @@ import kaboom from "kaboom";
 import { player } from "./player";
 import { enemy } from "./enemy";
 
-export const GRAVITY = 1200
+export const GRAVITY = 1200;
+export const SOLID_RADIUS = 640;
 
 kaboom({
   width: 640,
@@ -88,7 +89,17 @@ addLevel(
     s: () => ["spawnpoint"],
     e: () => ["enemySpawn", { enemyType: "default" }],
     //@ts-ignore
-    x: () => [area(), solid(), rect(MAP_CELL_WIDTH, MAP_CELL_HEIGHT), origin("bot"), color(100, 100, 100), outline(2)],
+    x: () => [
+      "levelblock",
+      area(), 
+      solid(), 
+      rect(MAP_CELL_WIDTH, 
+           MAP_CELL_HEIGHT), 
+            //@ts-ignore
+           origin("bot"), 
+           color(100, 100, 100), 
+           outline(2),
+    ],
     o: () => [
       "hook",
       area({ width: MAP_CELL_WIDTH, height: MAP_CELL_HEIGHT }),
@@ -96,7 +107,7 @@ addLevel(
       color(25, 200, 25),
       outline(2),
       //@ts-ignore
-      origin("bot")
+      origin("center")
     ],
   }
 );
@@ -104,6 +115,18 @@ addLevel(
 // Player spawnpoint
 let spawnpoint = get("spawnpoint")[0]
 let p = player(spawnpoint.pos.x, spawnpoint.pos.y);
+
+const levelBlocks = get("levelblock");
+
+levelBlocks.forEach(block => {
+  block.onUpdate(() => {
+    if(block.pos.dist(p.pos) > SOLID_RADIUS && block.solid) {
+      block.solid = false; 
+    } else if (!block.solid)  {
+      block.solid = true; 
+    }
+  });
+})
 
 // Enemy Spawns
 let enemySpawnpoints = get("enemySpawn")

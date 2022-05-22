@@ -225,6 +225,7 @@ export const Whip = (p: GameObj) => {
 
 
   w.attack = async () => {
+    if(p.attacking) return;
     w.length = DEFAULT_WHIP_LENGTH / 2;
 
     const inputDir = getInputDir();

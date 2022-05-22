@@ -1,5 +1,6 @@
 import { Vec2 } from "kaboom";
 import { leftOrRight } from "./input";
+import Sword from "./sword";
 import { Whip } from "./whip"
 
 const SPEED = 80;
@@ -43,7 +44,8 @@ export const player = (x: number = 190, y: number = 100) => {
 
   p.grounded = () => p.isGrounded && p.isGrounded();
 
-  const whip = Whip(p)
+  const whip = Whip(p);
+  const sword = Sword(p, whip, PLAYER_HEIGHT);
 
   p.onUpdate(() => {
     // Update camera and sprite
@@ -88,8 +90,6 @@ export const player = (x: number = 190, y: number = 100) => {
     p.frame =  7
   })
 
-  // --- WHIP ---
-
   // Destroy all
   p.onDestroy(() => {
     whip.segs.forEach((seg) => destroy(seg));
@@ -118,11 +118,11 @@ export const player = (x: number = 190, y: number = 100) => {
   });
 
   onKeyPress("j", () => {
-    !p.attacking && whip.attack();
+     whip.attack();
   });
 
   onKeyPress("k", () => {
-    !p.attacking && debug.log("ADD SWORD SWING HERE");
+     sword.attack();
   });
 
   return p;

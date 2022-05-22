@@ -26,10 +26,14 @@
         - [x] Flailing mechanic *? 
         - [x] Swinging mechanic
     - [ ] Sword (or another close range weapon)
+        - [x] Basic attack
     - [ ] Throwables
     - [ ] Healing items
 
+* = WIP
 ## MISC
+- [x] Optimize the collisions for the blocks
+- [ ] Sword and sword swing sprites
 - [ ] Enemy Sprites
 - [ ] Tileset for the map ( about 32px wide )
 - [ ] Add basic sounds
