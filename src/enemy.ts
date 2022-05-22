@@ -1,4 +1,4 @@
-import { GameObj, Comp } from "kaboom";
+import { GameObj } from "kaboom";
 const DEFAULT_AGGRO_DISTANCE = 300;
 const DEFAULT_ENEMY_SPEED = 75;
 
