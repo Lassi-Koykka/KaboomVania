@@ -1,6 +1,6 @@
 import { Vec2 } from "kaboom";
 import { leftOrRight } from "./input";
-import Sword from "./sword";
+import { SwordSwing }  from "./sword";
 import { Whip } from "./whip"
 
 const SPEED = 80;
@@ -38,6 +38,7 @@ export const player = (x: number = 190, y: number = 100) => {
       attacking: false,
       dirX: 0,
       facing: 1,
+      swordActive: false,
       grounded: () => {}
     },
   ]);
@@ -45,7 +46,6 @@ export const player = (x: number = 190, y: number = 100) => {
   p.grounded = () => p.isGrounded && p.isGrounded();
 
   const whip = Whip(p);
-  const sword = Sword(p, whip, PLAYER_HEIGHT);
 
   p.onUpdate(() => {
     // Update camera and sprite
@@ -122,7 +122,7 @@ export const player = (x: number = 190, y: number = 100) => {
   });
 
   onKeyPress("k", () => {
-     sword.attack();
+    SwordSwing(p, whip, PLAYER_HEIGHT);
   });
 
   return p;
