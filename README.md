@@ -30,7 +30,7 @@
     - [ ] Throwables
     - [ ] Healing items
 
-* = WIP
+\* WIP
 ## MISC
 - [ ] Combine assets to single sprite atlas
 - [ ] Better character sprite
@@ -48,3 +48,14 @@
 - [ ] Enemy types
 - [ ] More levels
 - [ ] Items
+
+
+# ASSET CREDITS
+#### Ghost and skeleton sprites:
+**[Balmer - Skeleton and Ghost spritesheets (Ars Notoria)]( https://opengameart.org/content/skeleton-and-ghost-spritesheets-ars-notoria )**
+
+#### Bat sprites:
+**[MoikMellah - Bat (32x32)](https://opengameart.org/content/bat-32x32)**
+
+#### Tilesets:
+**[Eris - Simple duotone tileset](https://opengameart.org/content/simple-duotone-tileset)**
