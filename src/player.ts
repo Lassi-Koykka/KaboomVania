@@ -1,6 +1,6 @@
 import { Vec2 } from "kaboom";
 import { leftOrRight } from "./input";
-import { SwordSwing }  from "./sword";
+import { Sword }  from "./sword";
 import { Whip } from "./whip"
 
 const SPEED = 80;
@@ -18,10 +18,11 @@ const getAnimByDirection = (dir: Vec2) => {
   }
 }
 
-export const player = (x: number = 190, y: number = 100) => {
+export const Player = (x: number = 190, y: number = 100) => {
   // Create player
   const p = add([
     "player",
+    z(10),
     pos(x, y),
     health(14),
     sprite("player"),
@@ -46,11 +47,21 @@ export const player = (x: number = 190, y: number = 100) => {
   p.grounded = () => p.isGrounded && p.isGrounded();
 
   const whip = Whip(p);
+  const sword = Sword(p, whip, PLAYER_HEIGHT)
 
   p.onUpdate(() => {
     // Update camera and sprite
     camPos(vec2(p.pos.x, p.pos.y - PLAYER_HEIGHT / 2));
     p.flipX(p.facing === -1)
+
+    // Kill if fell down
+    if(p.pos.y > 500) {
+      let spawnpoint = get("spawnpoint")[0];
+      destroy(p);
+      wait(0.3, () => {
+        Player(spawnpoint.pos.x, spawnpoint.pos.y);
+      })
+    }
 
     // Move if walking or in air
     if ((p.dirX && !p.attacking) || !p.grounded()) {
@@ -68,6 +79,7 @@ export const player = (x: number = 190, y: number = 100) => {
     } else if(leftOrRight() && !p.attacking) {
       p.state !== "walk" && p.enterState("walk")
     }
+
   });
 
   p.onStateEnter("walk", () => {
@@ -94,6 +106,7 @@ export const player = (x: number = 190, y: number = 100) => {
   p.onDestroy(() => {
     whip.segs.forEach((seg) => destroy(seg));
     destroy(whip);
+    destroy(sword);
   });
 
   // Controls
@@ -122,7 +135,7 @@ export const player = (x: number = 190, y: number = 100) => {
   });
 
   onKeyPress("k", () => {
-    SwordSwing(p, whip, PLAYER_HEIGHT);
+    sword.attack();
   });
 
   return p;

@@ -1,7 +1,8 @@
 import "./style.css";
 import kaboom from "kaboom";
-import { player } from "./player";
+import { Player } from "./player";
 import { enemy } from "./enemy";
+import {loadAssets} from "./loadAssets";
 
 export const GRAVITY = 1200;
 export const SOLID_RADIUS = 330;
@@ -15,43 +16,7 @@ kaboom({
   background: [25, 25, 25],
 });
 
-loadSprite("whip_tail", "whip_tail.png");
-loadSprite("player", "whip_man_v0.png", {
-  sliceX: 15,
-  sliceY: 1,
-  anims: {
-    idle: {
-      from: 0,
-      to: 0,
-    },
-    walk: {
-      from: 1,
-      to: 4,
-      loop: true,
-      speed: 6
-    },
-    whip_up: {
-      from: 6,
-      to: 6,
-    },
-    whip_up_forward: {
-      from: 8,
-      to: 8,
-    },
-    whip_forward: {
-      from: 10,
-      to: 10,
-    },
-    whip_down_forward: {
-      from: 12,
-      to: 12,
-    },
-    whip_down: {
-      from: 14,
-      to: 14,
-    },
-  }
-})
+loadAssets();
 
 gravity(GRAVITY);
 
@@ -72,73 +37,89 @@ addLevel(
   //   "xxxxxxxxxxxxxxxx",
   // ],
   [
-  "                                                   o    o       ",
-  "          o        o                             f          e   ",
-  "  e              f                  o                       xxx ",
-  "xxxxxx                                      xxx             xxx ",
-  "             xxx       e                                      x ",
-  "      xxx    xxx     xxxx    xxx         xx    xx             x ",
-  "             xxx                                        f     x ",
-  "          x  xxx          xx           xx          xx         x ",
-  "  s          xxx                   e   xx                     x ",
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-],
+    "                                                   o       o    ",
+    "                   o                                            ",
+    "          o                                      f           e  ",
+    "  e              f                  o                        xxx",
+    "xxxxxx                                      xxx              xxx",
+    "             xxx       e                                       x",
+    "      xxx    xxx     xxxx    xxx         xx    xxx             x",
+    "             xxx                                        f      x",
+    "          x  xxx          xx           xx          xx          x",
+    "  s          xxx                   e   xx                      x",
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  ],
   {
     width: MAP_CELL_WIDTH,
     height: MAP_CELL_HEIGHT,
-    s: () => ["spawnpoint"],
+    s: () => ["spawnpoint", {active: true}],
     e: () => ["enemySpawn", { enemyType: "default" }],
     f: () => ["enemySpawn", { enemyType: "flying" }],
     //@ts-ignore
     x: () => [
       "levelblock",
-      area(), 
-      solid(), 
-      rect(MAP_CELL_WIDTH, 
-           MAP_CELL_HEIGHT), 
-            //@ts-ignore
-           origin("bot"), 
-           color(100, 100, 100), 
-           outline(2),
+      "environment",
+      area(),
+      solid(),
+      sprite("brick_block_2"),
+      area({ width: MAP_CELL_WIDTH, height: MAP_CELL_HEIGHT }),
+      //@ts-ignore
+      origin("bot"),
+      // color(100, 100, 100),
+      // outline(2),
     ],
     o: () => [
       "hook",
+      "environment",
       area({ width: MAP_CELL_WIDTH, height: MAP_CELL_HEIGHT }),
-      circle(MAP_CELL_HEIGHT / 2),
-      color(25, 200, 25),
+      // circle(MAP_CELL_HEIGHT / 2),
+      // color(25, 200, 25),
+      sprite("hook"),
       outline(2),
       //@ts-ignore
-      origin("center")
+      origin("center"),
     ],
   }
 );
 
+// Enemy Spawns
+let enemySpawnpoints = get("enemySpawn");
+enemySpawnpoints.forEach((sp) => enemy(sp.pos.x, sp.pos.y, sp.enemyType));
+
 // Player spawnpoint
-let spawnpoint = get("spawnpoint")[0]
-let p = player(spawnpoint.pos.x, spawnpoint.pos.y);
+let spawnpoint = get("spawnpoint")[0];
+Player(spawnpoint.pos.x, spawnpoint.pos.y);
 
 const levelBlocks = get("levelblock");
 
-levelBlocks.forEach(block => {
+levelBlocks.forEach((block) => {
   block.onUpdate(() => {
-    if(block.pos.dist(p.pos) > SOLID_RADIUS && block.solid) {
+    let pl = get("player")[0];
+    if (pl && block.pos.dist(pl.pos) > SOLID_RADIUS && block.solid) {
       block.unuse("solid");
-      // block.solid = false; 
-    } else if (!block.solid)  {
+      // block.solid = false;
+    } else if (!block.solid) {
       block.use(solid());
-      // block.solid = true; 
+      // block.solid = true;
     }
   });
+});
+
+onUpdate("environment", (obj) => {
+    if(!obj.screenPos) return;
+    const scPos = obj.screenPos()
+    const offset = MAP_CELL_WIDTH / 2;
+    if(scPos.x < 0 - offset || scPos.x > width() + offset || scPos.y < 0 - offset || scPos.y > height() + offset) {
+      obj.hidden = true
+    } else {
+      obj.hidden = false;
+    }
 })
 
-// Enemy Spawns
-let enemySpawnpoints = get("enemySpawn")
-enemySpawnpoints.forEach((sp) => enemy(sp.pos.x, sp.pos.y, sp.enemyType))
-
 onKeyPress("1", () => {
-  destroy(p);
+  destroy(get("player")[0]);
   const { x, y } = toWorld(mousePos());
-  p = player(x, y);
+  Player(x, y);
 });
 onKeyPress("2", () => {
   const { x, y } = toWorld(mousePos());

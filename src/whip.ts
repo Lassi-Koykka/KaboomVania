@@ -51,13 +51,13 @@ export const Whip = (p: GameObj) => {
       pos(),
       area({ width: segWidth, height: segWidth }), 
       rotate(0),
-      ...(!last ? [opacity(0), rect(segWidth, 3), outline(2, new Color(125, 125, 125))] : [sprite("whip_tail")]),
+      ...(!last ? [opacity(0), rect(segWidth, 3), outline(2, new Color(155, 173, 183))] : [sprite("whip_tail")]),
       { locked: i === 0 },
     ]);
     //@ts-ignore
     seg.origin = "center"
     seg.onCollide("enemy", (enemy: GameObj) => {
-      if (w.state === "attack" || (last && w.state === "hold")) destroy(enemy);
+      if (w.state === "attack" || (last && w.state === "hold")) enemy.kill();
     });
 
     // Start swing
@@ -71,7 +71,7 @@ export const Whip = (p: GameObj) => {
   }
 
   const updateWhipSticks = () => {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 25; i++) {
       w.sticks.forEach((stick) => {
         const { p1, p2, length } = stick;
         const stickCenter = p1.pos.add(p2.pos).scale(0.5);
